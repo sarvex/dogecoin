@@ -23,7 +23,9 @@ VB_TOP_BITS = 0x20000000
 VB_UNKNOWN_BIT = 27 # Choose a bit unassigned to any deployment
 
 WARN_UNKNOWN_RULES_MINED = "Unknown block versions being mined! It's possible unknown rules are in effect"
-WARN_UNKNOWN_RULES_ACTIVE = "unknown new rules activated (versionbit {})".format(VB_UNKNOWN_BIT)
+WARN_UNKNOWN_RULES_ACTIVE = (
+    f"unknown new rules activated (versionbit {VB_UNKNOWN_BIT})"
+)
 VB_PATTERN = re.compile("^Warning.*versionbit")
 
 # TestNode: bare-bones "peer".  Used mostly as a conduit for a test to sending
@@ -103,8 +105,7 @@ class VersionBitsWarningTest(BitcoinTestFramework):
         # Setup the p2p connection and start up the network thread.
         test_node = TestNode()
 
-        connections = []
-        connections.append(NodeConn('127.0.0.1', p2p_port(0), self.nodes[0], test_node))
+        connections = [NodeConn('127.0.0.1', p2p_port(0), self.nodes[0], test_node)]
         test_node.add_connection(connections[0])
 
         NetworkThread().start() # Start up network handling in another thread

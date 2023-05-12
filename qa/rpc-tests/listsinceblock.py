@@ -13,7 +13,7 @@ class ListSinceBlockTest (BitcoinTestFramework):
         self.setup_clean_chain = True
         self.num_nodes = 4
 
-    def run_test (self):
+    def run_test(self):
         '''
         `listsinceblock` did not behave correctly when handed a block that was
         no longer in the main chain:
@@ -61,7 +61,7 @@ class ListSinceBlockTest (BitcoinTestFramework):
         # generate on both sides
         lastblockhash = self.nodes[1].generate(6)[5]
         self.nodes[2].generate(7)
-        print('lastblockhash=%s' % (lastblockhash))
+        print(f'lastblockhash={lastblockhash}')
 
         self.sync_all()
 
@@ -69,11 +69,7 @@ class ListSinceBlockTest (BitcoinTestFramework):
 
         # listsinceblock(lastblockhash) should now include tx, as seen from nodes[0]
         lsbres = self.nodes[0].listsinceblock(lastblockhash)
-        found = False
-        for tx in lsbres['transactions']:
-            if tx['txid'] == senttx:
-                found = True
-                break
+        found = any(tx['txid'] == senttx for tx in lsbres['transactions'])
         assert_equal(found, True)
 
 if __name__ == '__main__':

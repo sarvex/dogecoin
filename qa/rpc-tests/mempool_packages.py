@@ -19,8 +19,9 @@ class MempoolPackagesTest(BitcoinTestFramework):
         self.setup_clean_chain = False
 
     def setup_network(self):
-        self.nodes = []
-        self.nodes.append(start_node(0, self.options.tmpdir, ["-maxorphantx=1000", "-debug"]))
+        self.nodes = [
+            start_node(0, self.options.tmpdir, ["-maxorphantx=1000", "-debug"])
+        ]
         self.nodes.append(start_node(1, self.options.tmpdir, ["-maxorphantx=1000", "-limitancestorcount=5", "-debug"]))
         connect_nodes(self.nodes[0], 1)
         self.is_network_split = False
@@ -31,9 +32,7 @@ class MempoolPackagesTest(BitcoinTestFramework):
     def chain_transaction(self, node, parent_txid, vout, value, fee, num_outputs):
         send_value = satoshi_round((value - fee)/num_outputs)
         inputs = [ {'txid' : parent_txid, 'vout' : vout} ]
-        outputs = {}
-        for i in range(num_outputs):
-            outputs[node.getnewaddress()] = send_value
+        outputs = {node.getnewaddress(): send_value for _ in range(num_outputs)}
         rawtx = node.createrawtransaction(inputs, outputs)
         signedtx = node.signrawtransaction(rawtx)
         txid = node.sendrawtransaction(signedtx['hex'])

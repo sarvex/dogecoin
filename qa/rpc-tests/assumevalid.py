@@ -73,15 +73,13 @@ class SendHeadersTest(BitcoinTestFramework):
         # Start node0. We don't start the other nodes yet since
         # we need to pre-mine a block with an invalid transaction
         # signature so we can pass in the block hash as assumevalid.
-        self.nodes = []
-        self.nodes.append(start_node(0, self.options.tmpdir, ["-debug"]))
+        self.nodes = [start_node(0, self.options.tmpdir, ["-debug"])]
 
     def run_test(self):
 
         # Connect to node0
         node0 = BaseNode()
-        connections = []
-        connections.append(NodeConn('127.0.0.1', p2p_port(0), self.nodes[0], node0))
+        connections = [NodeConn('127.0.0.1', p2p_port(0), self.nodes[0], node0)]
         node0.add_connection(connections[0])
 
         NetworkThread().start() # Start up network handling in another thread
@@ -110,7 +108,7 @@ class SendHeadersTest(BitcoinTestFramework):
         height += 1
 
         # Bury the block 100 deep so the coinbase output is spendable
-        for i in range(100):
+        for _ in range(100):
             block = create_block(self.tip, create_coinbase(height), self.block_time)
             block.solve()
             self.blocks.append(block)
@@ -136,7 +134,7 @@ class SendHeadersTest(BitcoinTestFramework):
         height += 1
 
         # Bury the assumed valid block 2100 deep
-        for i in range(2100):
+        for _ in range(2100):
             block = create_block(self.tip, create_coinbase(height), self.block_time)
             block.nVersion = 4
             block.solve()
@@ -146,26 +144,36 @@ class SendHeadersTest(BitcoinTestFramework):
             height += 1
 
         # Start node1 and node2 with assumevalid so they accept a block with a bad signature.
-        self.nodes.append(start_node(1, self.options.tmpdir,
-                                     ["-debug", "-assumevalid=" + hex(block102.sha256)]))
+        self.nodes.append(
+            start_node(
+                1,
+                self.options.tmpdir,
+                ["-debug", f"-assumevalid={hex(block102.sha256)}"],
+            )
+        )
         node1 = BaseNode()  # connects to node1
         connections.append(NodeConn('127.0.0.1', p2p_port(1), self.nodes[1], node1))
         node1.add_connection(connections[1])
         node1.wait_for_verack()
 
-        self.nodes.append(start_node(2, self.options.tmpdir,
-                                     ["-debug", "-assumevalid=" + hex(block102.sha256)]))
+        self.nodes.append(
+            start_node(
+                2,
+                self.options.tmpdir,
+                ["-debug", f"-assumevalid={hex(block102.sha256)}"],
+            )
+        )
         node2 = BaseNode()  # connects to node2
         connections.append(NodeConn('127.0.0.1', p2p_port(2), self.nodes[2], node2))
         node2.add_connection(connections[2])
         node2.wait_for_verack()
 
         # send header lists to all three nodes
-        node0.send_header_for_blocks(self.blocks[0:2000])
+        node0.send_header_for_blocks(self.blocks[:2000])
         node0.send_header_for_blocks(self.blocks[2000:])
-        node1.send_header_for_blocks(self.blocks[0:2000])
+        node1.send_header_for_blocks(self.blocks[:2000])
         node1.send_header_for_blocks(self.blocks[2000:])
-        node2.send_header_for_blocks(self.blocks[0:200])
+        node2.send_header_for_blocks(self.blocks[:200])
 
         # Send 102 blocks to node0. Block 102 will be rejected.
         for i in range(101):

@@ -65,7 +65,7 @@ class BIP9SoftForksTest(ComparisonTestFramework):
         return tx
 
     def generate_blocks(self, number, version, test_blocks = []):
-        for i in range(number):
+        for _ in range(number):
             block = create_block(self.tip, create_coinbase(self.height), self.last_block_time + 1)
             block.nVersion = version
             block.rehash()
@@ -87,7 +87,7 @@ class BIP9SoftForksTest(ComparisonTestFramework):
         # generate some coins for later
         self.coinbase_blocks = self.nodes[0].generate(2)
         self.height = 3  # height of the next block to build
-        self.tip = int("0x" + self.nodes[0].getbestblockhash(), 0)
+        self.tip = int(f"0x{self.nodes[0].getbestblockhash()}", 0)
         self.nodeaddress = self.nodes[0].getnewaddress()
         self.last_block_time = int(time.time())
 
@@ -214,12 +214,17 @@ class BIP9SoftForksTest(ComparisonTestFramework):
 
 
     def get_tests(self):
-        for test in itertools.chain(
-                self.test_BIP('csv', 0x20000001, self.sequence_lock_invalidate, self.donothing, 0),
-                self.test_BIP('csv', 0x20000001, self.mtp_invalidate, self.donothing, 0),
-                self.test_BIP('csv', 0x20000001, self.donothing, self.csv_invalidate, 0)
-        ):
-            yield test
+        yield from itertools.chain(
+            self.test_BIP(
+                'csv', 0x20000001, self.sequence_lock_invalidate, self.donothing, 0
+            ),
+            self.test_BIP(
+                'csv', 0x20000001, self.mtp_invalidate, self.donothing, 0
+            ),
+            self.test_BIP(
+                'csv', 0x20000001, self.donothing, self.csv_invalidate, 0
+            ),
+        )
 
     def donothing(self, tx):
         return

@@ -32,8 +32,8 @@ class RPCBindTest(BitcoinTestFramework):
         expected = [(addr_to_hex(addr), port) for (addr, port) in expected]
         base_args = ['-disablewallet', '-nolisten']
         if allow_ips:
-            base_args += ['-rpcallowip=' + x for x in allow_ips]
-        binds = ['-rpcbind='+addr for addr in addresses]
+            base_args += [f'-rpcallowip={x}' for x in allow_ips]
+        binds = [f'-rpcbind={addr}' for addr in addresses]
         self.nodes = start_nodes(self.num_nodes, self.options.tmpdir, [base_args + binds], connect_to)
         pid = bitcoind_processes[0].pid
         assert_equal(set(get_bind_addrs(pid)), set(expected))
@@ -44,7 +44,9 @@ class RPCBindTest(BitcoinTestFramework):
         Start a node with rpcallow IP, and request getnetworkinfo
         at a non-localhost IP.
         '''
-        base_args = ['-disablewallet', '-nolisten'] + ['-rpcallowip='+x for x in allow_ips]
+        base_args = ['-disablewallet', '-nolisten'] + [
+            f'-rpcallowip={x}' for x in allow_ips
+        ]
         self.nodes = start_nodes(self.num_nodes, self.options.tmpdir, [base_args])
         # connect to node through non-loopback interface
         node = get_rpc_proxy(rpc_url(0, "%s:%d" % (rpchost, rpcport)), 0)
@@ -54,15 +56,12 @@ class RPCBindTest(BitcoinTestFramework):
     def run_test(self):
         # due to OS-specific network stats queries, this test works only on Linux
         assert(sys.platform.startswith('linux'))
-        # find the first non-loopback interface for testing
-        non_loopback_ip = None
-        for name,ip in all_interfaces():
-            if ip != '127.0.0.1':
-                non_loopback_ip = ip
-                break
+        non_loopback_ip = next(
+            (ip for name, ip in all_interfaces() if ip != '127.0.0.1'), None
+        )
         if non_loopback_ip is None:
             assert(not 'This test requires at least one non-loopback IPv4 interface')
-        print("Using interface %s for testing" % non_loopback_ip)
+        print(f"Using interface {non_loopback_ip} for testing")
 
         defaultport = rpc_port(0)
 

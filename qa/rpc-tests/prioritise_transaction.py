@@ -21,10 +21,11 @@ class PrioritiseTransactionTest(BitcoinTestFramework):
         self.txouts = gen_return_txouts()
 
     def setup_network(self):
-        self.nodes = []
         self.is_network_split = False
 
-        self.nodes.append(start_node(0, self.options.tmpdir, ["-debug", "-printpriority=1"]))
+        self.nodes = [
+            start_node(0, self.options.tmpdir, ["-debug", "-printpriority=1"])
+        ]
         self.nodes.append(start_node(1, self.options.tmpdir, ["-debug", "-printpriority=1"]))
         connect_nodes(self.nodes[0], 1)
         self.relayfee = self.nodes[0].getnetworkinfo()['relayfee']
@@ -107,10 +108,8 @@ class PrioritiseTransactionTest(BitcoinTestFramework):
         assert(len(utxo_list) > 0)
         utxo = utxo_list[0]
 
-        inputs = []
-        outputs = {}
-        inputs.append({"txid" : utxo["txid"], "vout" : utxo["vout"]})
-        outputs[self.nodes[0].getnewaddress()] = utxo["amount"] - self.relayfee
+        inputs = [{"txid": utxo["txid"], "vout": utxo["vout"]}]
+        outputs = {self.nodes[0].getnewaddress(): utxo["amount"] - self.relayfee}
         raw_tx = self.nodes[0].createrawtransaction(inputs, outputs)
         tx_hex = self.nodes[0].signrawtransaction(raw_tx)["hex"]
         txid = self.nodes[0].sendrawtransaction(tx_hex)

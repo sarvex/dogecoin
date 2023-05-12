@@ -22,8 +22,8 @@ def unDERify(tx):
     scriptSig = CScript(tx.vin[0].scriptSig)
     newscript = []
     for i in scriptSig:
-        if (len(newscript) == 0):
-            newscript.append(i[0:-1] + b'\0' + i[-1:])
+        if not newscript:
+            newscript.append(i[:-1] + b'\0' + i[-1:])
         else:
             newscript.append(i)
     tx.vin[0].scriptSig = CScript(newscript)
@@ -75,13 +75,13 @@ class BIP66Test(ComparisonTestFramework):
 
         self.coinbase_blocks = self.nodes[0].generate(2)
         height = 3  # height of the next block to build
-        self.tip = int("0x" + self.nodes[0].getbestblockhash(), 0)
+        self.tip = int(f"0x{self.nodes[0].getbestblockhash()}", 0)
         self.nodeaddress = self.nodes[0].getnewaddress()
         self.last_block_time = int(time.time())
 
         ''' 298 more version 2 blocks '''
         test_blocks = []
-        for i in range(298):
+        for _ in range(298):
             block = create_block(self.tip, create_coinbase(height), self.last_block_time + 1)
             block.nVersion = 2
             block.rehash()
@@ -94,7 +94,7 @@ class BIP66Test(ComparisonTestFramework):
 
         ''' Mine 749 version 3 blocks '''
         test_blocks = []
-        for i in range(749):
+        for _ in range(749):
             block = create_block(self.tip, create_coinbase(height), self.last_block_time + 1)
             block.nVersion = 3
             block.rehash()
@@ -128,7 +128,7 @@ class BIP66Test(ComparisonTestFramework):
 
         ''' Mine 199 new version blocks on last valid tip '''
         test_blocks = []
-        for i in range(199):
+        for _ in range(199):
             block = create_block(self.tip, create_coinbase(height), self.last_block_time + 1)
             block.nVersion = 3
             block.rehash()

@@ -24,11 +24,11 @@ WIT_V1 = 1
 def witness_script(version, pubkey):
     if (version == 0):
         pubkeyhash = bytes_to_hex_str(ripemd160(sha256(hex_str_to_bytes(pubkey))))
-        pkscript = "0014" + pubkeyhash
+        pkscript = f"0014{pubkeyhash}"
     elif (version == 1):
         # 1-of-1 multisig
-        scripthash = bytes_to_hex_str(sha256(hex_str_to_bytes("5121" + pubkey + "51ae")))
-        pkscript = "0020" + scripthash
+        scripthash = bytes_to_hex_str(sha256(hex_str_to_bytes(f"5121{pubkey}51ae")))
+        pkscript = f"0020{scripthash}"
     else:
         assert("Wrong version" == "0 or 1")
     return pkscript
@@ -40,36 +40,35 @@ def addlength(script):
 
 def create_witnessprogram(version, node, utxo, pubkey, encode_p2sh, amount):
     pkscript = witness_script(version, pubkey)
-    if (encode_p2sh):
+    if encode_p2sh:
         p2sh_hash = bytes_to_hex_str(ripemd160(sha256(hex_str_to_bytes(pkscript))))
-        pkscript = "a914"+p2sh_hash+"87"
-    inputs = []
-    outputs = {}
-    inputs.append({ "txid" : utxo["txid"], "vout" : utxo["vout"]} )
+        pkscript = f"a914{p2sh_hash}87"
+    inputs = [{"txid": utxo["txid"], "vout": utxo["vout"]}]
     DUMMY_P2SH = "2MySexEGVzZpRgNQ1JdjdP5bRETznm3roQ2" # P2SH of "OP_1 OP_DROP"
-    outputs[DUMMY_P2SH] = amount
+    outputs = {DUMMY_P2SH: amount}
     tx_to_witness = node.createrawtransaction(inputs,outputs)
     #replace dummy output with our own
-    tx_to_witness = tx_to_witness[0:110] + addlength(pkscript) + tx_to_witness[-8:]
+    tx_to_witness = tx_to_witness[:110] + addlength(pkscript) + tx_to_witness[-8:]
     return tx_to_witness
 
 def send_to_witness(version, node, utxo, pubkey, encode_p2sh, amount, sign=True, insert_redeem_script=""):
     tx_to_witness = create_witnessprogram(version, node, utxo, pubkey, encode_p2sh, amount)
-    if (sign):
+    if sign:
         signed = node.signrawtransaction(tx_to_witness)
-        assert("errors" not in signed or len(["errors"]) == 0)
+        assert "errors" not in signed
         return node.sendrawtransaction(signed["hex"])
     else:
-        if (insert_redeem_script):
-            tx_to_witness = tx_to_witness[0:82] + addlength(insert_redeem_script) + tx_to_witness[84:]
+        if insert_redeem_script:
+            tx_to_witness = (
+                tx_to_witness[:82]
+                + addlength(insert_redeem_script)
+                + tx_to_witness[84:]
+            )
 
     return node.sendrawtransaction(tx_to_witness)
 
 def getutxo(txid):
-    utxo = {}
-    utxo["vout"] = 0
-    utxo["txid"] = txid
-    return utxo
+    return {"vout": 0, "txid": txid}
 
 def find_unspent(node, min_value):
     for utxo in node.listunspent():
@@ -84,8 +83,18 @@ class SegWitTest(BitcoinTestFramework):
         self.num_nodes = 3
 
     def setup_network(self):
-        self.nodes = []
-        self.nodes.append(start_node(0, self.options.tmpdir, ["-logtimemicros", "-debug", "-walletprematurewitness", "-rpcserialversion=0"]))
+        self.nodes = [
+            start_node(
+                0,
+                self.options.tmpdir,
+                [
+                    "-logtimemicros",
+                    "-debug",
+                    "-walletprematurewitness",
+                    "-rpcserialversion=0",
+                ],
+            )
+        ]
         self.nodes.append(start_node(1, self.options.tmpdir, ["-logtimemicros", "-debug", "-blockversion=4", "-promiscuousmempoolflags=517", "-prematurewitness", "-walletprematurewitness", "-rpcserialversion=1"]))
         self.nodes.append(start_node(2, self.options.tmpdir, ["-logtimemicros", "-debug", "-blockversion=536870915", "-promiscuousmempoolflags=517", "-prematurewitness", "-walletprematurewitness"]))
         connect_nodes(self.nodes[1], 0)

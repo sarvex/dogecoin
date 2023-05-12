@@ -40,10 +40,7 @@ def http_post_call(host, port, path, requestdata = '', response_object = 0):
     conn = http.client.HTTPConnection(host, port)
     conn.request('POST', path, requestdata)
 
-    if response_object:
-        return conn.getresponse()
-
-    return conn.getresponse().read()
+    return conn.getresponse() if response_object else conn.getresponse().read()
 
 class RESTTest (BitcoinTestFramework):
     FORMAT_SEPARATOR = "."

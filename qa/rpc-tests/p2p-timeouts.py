@@ -62,8 +62,9 @@ class TimeoutsTest(BitcoinTestFramework):
         self.no_version_node = TestNode() # never send version (just ping)
         self.no_send_node = TestNode() # never send anything
 
-        connections = []
-        connections.append(NodeConn('127.0.0.1', p2p_port(0), self.nodes[0], self.no_verack_node))
+        connections = [
+            NodeConn('127.0.0.1', p2p_port(0), self.nodes[0], self.no_verack_node)
+        ]
         connections.append(NodeConn('127.0.0.1', p2p_port(0), self.nodes[0], self.no_version_node, send_version=False))
         connections.append(NodeConn('127.0.0.1', p2p_port(0), self.nodes[0], self.no_send_node, send_version=False))
         self.no_verack_node.add_connection(connections[0])

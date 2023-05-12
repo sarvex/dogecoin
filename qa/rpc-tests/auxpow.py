@@ -19,7 +19,7 @@ class AuxPOWTest (BitcoinTestFramework):
     MATURITY_HEIGHT = 60 # number of blocks for mined transactions to mature
 
     def setup_chain(self):
-        print("Initializing test directory " + self.options.tmpdir)
+        print(f"Initializing test directory {self.options.tmpdir}")
         initialize_chain_clean(self.options.tmpdir, 2)
 
     def setup_network(self, split=False):
@@ -35,9 +35,7 @@ class AuxPOWTest (BitcoinTestFramework):
         try:
             scrypt_auxpow.mineScryptAux(self.nodes[0], "00", True)
         except JSONRPCException as ex:
-            if ex.error['message'] == "getauxblock method is not yet available":
-                pass
-            else:
+            if ex.error['message'] != "getauxblock method is not yet available":
                 raise ex
         self.sync_all()
 
@@ -55,9 +53,7 @@ class AuxPOWTest (BitcoinTestFramework):
         try:
             scrypt_auxpow.mineScryptAux(self.nodes[0], "00", True)
         except JSONRPCException as ex:
-            if ex.error['message'] == "getauxblock method is not yet available":
-                pass
-            else:
+            if ex.error['message'] != "getauxblock method is not yet available":
                 raise ex
         self.sync_all()
 

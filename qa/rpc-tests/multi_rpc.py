@@ -26,7 +26,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
         #Append rpcauth to bitcoin.conf before initialization
         rpcauth = "rpcauth=rt:93648e835a54c573682c2eb19f882535$7681e9c5b74bdd85e78166031d2058e1069b3ed7ed967c93fc63abba06f31144"
         rpcauth2 = "rpcauth=rt2:f8607b1a88861fac29dfccf9b52ff9f$ff36a0c23c8c62b4846112e50fa888416e94c17bfd4c42f88fd8f55ec6a3137e"
-        with open(os.path.join(self.options.tmpdir+"/node0", "dogecoin.conf"), 'a', encoding='utf8') as f:
+        with open(os.path.join(f"{self.options.tmpdir}/node0", "dogecoin.conf"), 'a', encoding='utf8') as f:
             f.write(rpcauth+"\n")
             f.write(rpcauth2+"\n")
 
@@ -41,7 +41,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
         url = urllib.parse.urlparse(self.nodes[0].url)
 
         #Old authpair
-        authpair = url.username + ':' + url.password
+        authpair = f'{url.username}:{url.password}'
 
         #New authpair generated via share/rpcuser tool
         rpcauth = "rpcauth=rt:93648e835a54c573682c2eb19f882535$7681e9c5b74bdd85e78166031d2058e1069b3ed7ed967c93fc63abba06f31144"
@@ -50,9 +50,9 @@ class HTTPBasicsTest (BitcoinTestFramework):
         #Second authpair with different username
         rpcauth2 = "rpcauth=rt2:f8607b1a88861fac29dfccf9b52ff9f$ff36a0c23c8c62b4846112e50fa888416e94c17bfd4c42f88fd8f55ec6a3137e"
         password2 = "8/F3uMDw4KSEbw96U3CA1C4X05dkHDN2BPFjTgZW4KI="
-        authpairnew = "rt:"+password
+        authpairnew = f"rt:{password}"
 
-        headers = {"Authorization": "Basic " + str_to_b64str(authpair)}
+        headers = {"Authorization": f"Basic {str_to_b64str(authpair)}"}
 
         conn = http.client.HTTPConnection(url.hostname, url.port)
         conn.connect()
@@ -62,7 +62,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
         conn.close()
 
         #Use new authpair to confirm both work
-        headers = {"Authorization": "Basic " + str_to_b64str(authpairnew)}
+        headers = {"Authorization": f"Basic {str_to_b64str(authpairnew)}"}
 
         conn = http.client.HTTPConnection(url.hostname, url.port)
         conn.connect()
@@ -72,8 +72,8 @@ class HTTPBasicsTest (BitcoinTestFramework):
         conn.close()
 
         #Wrong login name with rt's password
-        authpairnew = "rtwrong:"+password
-        headers = {"Authorization": "Basic " + str_to_b64str(authpairnew)}
+        authpairnew = f"rtwrong:{password}"
+        headers = {"Authorization": f"Basic {str_to_b64str(authpairnew)}"}
 
         conn = http.client.HTTPConnection(url.hostname, url.port)
         conn.connect()
@@ -83,8 +83,8 @@ class HTTPBasicsTest (BitcoinTestFramework):
         conn.close()
 
         #Wrong password for rt
-        authpairnew = "rt:"+password+"wrong"
-        headers = {"Authorization": "Basic " + str_to_b64str(authpairnew)}
+        authpairnew = f"rt:{password}wrong"
+        headers = {"Authorization": f"Basic {str_to_b64str(authpairnew)}"}
 
         conn = http.client.HTTPConnection(url.hostname, url.port)
         conn.connect()
@@ -94,8 +94,8 @@ class HTTPBasicsTest (BitcoinTestFramework):
         conn.close()
 
         #Correct for rt2
-        authpairnew = "rt2:"+password2
-        headers = {"Authorization": "Basic " + str_to_b64str(authpairnew)}
+        authpairnew = f"rt2:{password2}"
+        headers = {"Authorization": f"Basic {str_to_b64str(authpairnew)}"}
 
         conn = http.client.HTTPConnection(url.hostname, url.port)
         conn.connect()
@@ -105,8 +105,8 @@ class HTTPBasicsTest (BitcoinTestFramework):
         conn.close()
 
         #Wrong password for rt2
-        authpairnew = "rt2:"+password2+"wrong"
-        headers = {"Authorization": "Basic " + str_to_b64str(authpairnew)}
+        authpairnew = f"rt2:{password2}wrong"
+        headers = {"Authorization": f"Basic {str_to_b64str(authpairnew)}"}
 
         conn = http.client.HTTPConnection(url.hostname, url.port)
         conn.connect()

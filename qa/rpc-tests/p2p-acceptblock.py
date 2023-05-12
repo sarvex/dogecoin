@@ -120,9 +120,11 @@ class AcceptBlockTest(BitcoinTestFramework):
         # Node0 will be used to test behavior of processing unrequested blocks
         # from peers which are not whitelisted, while Node1 will be used for
         # the whitelisted case.
-        self.nodes = []
-        self.nodes.append(start_node(0, self.options.tmpdir, ["-debug"],
-                                     binary=self.options.testbinary))
+        self.nodes = [
+            start_node(
+                0, self.options.tmpdir, ["-debug"], binary=self.options.testbinary
+            )
+        ]
         self.nodes.append(start_node(1, self.options.tmpdir,
                                      ["-debug", "-whitelist=127.0.0.1"],
                                      binary=self.options.testbinary))
@@ -132,8 +134,7 @@ class AcceptBlockTest(BitcoinTestFramework):
         test_node = TestNode()   # connects to node0 (not whitelisted)
         white_node = TestNode()  # connects to node1 (whitelisted)
 
-        connections = []
-        connections.append(NodeConn('127.0.0.1', p2p_port(0), self.nodes[0], test_node))
+        connections = [NodeConn('127.0.0.1', p2p_port(0), self.nodes[0], test_node)]
         connections.append(NodeConn('127.0.0.1', p2p_port(1), self.nodes[1], white_node))
         test_node.add_connection(connections[0])
         white_node.add_connection(connections[1])
@@ -146,7 +147,7 @@ class AcceptBlockTest(BitcoinTestFramework):
 
         # 1. Have both nodes mine a block (leave IBD)
         [ n.generate(1) for n in self.nodes ]
-        tips = [ int("0x" + n.getbestblockhash(), 0) for n in self.nodes ]
+        tips = [int(f"0x{n.getbestblockhash()}", 0) for n in self.nodes]
 
         # 2. Send one block that builds on each tip.
         # This should be accepted.

@@ -39,16 +39,26 @@ class PruneTest(BitcoinTestFramework):
         self.utxo_cache_1 = []
 
     def setup_network(self):
-        self.nodes = []
         self.is_network_split = False
 
-        # Create nodes 0 and 1 to mine
-        self.nodes.append(start_node(0, self.options.tmpdir, ["-debug","-maxreceivebuffer=20000","-blockmaxsize=999000", "-checkblocks=5"], timewait=900))
+        self.nodes = [
+            start_node(
+                0,
+                self.options.tmpdir,
+                [
+                    "-debug",
+                    "-maxreceivebuffer=20000",
+                    "-blockmaxsize=999000",
+                    "-checkblocks=5",
+                ],
+                timewait=900,
+            )
+        ]
         self.nodes.append(start_node(1, self.options.tmpdir, ["-debug","-maxreceivebuffer=20000","-blockmaxsize=999000", "-checkblocks=5"], timewait=900))
 
         # Create node 2 to test pruning
         self.nodes.append(start_node(2, self.options.tmpdir, ["-debug","-maxreceivebuffer=20000","-prune=550"], timewait=900))
-        self.prunedir = self.options.tmpdir+"/node2/regtest/blocks/"
+        self.prunedir = f"{self.options.tmpdir}/node2/regtest/blocks/"
 
         # Create nodes 3 and 4 to test manual pruning (they will be re-started with manual pruning later)
         self.nodes.append(start_node(3, self.options.tmpdir, ["-debug=0","-maxreceivebuffer=20000","-blockmaxsize=999000"], timewait=900))
@@ -65,31 +75,31 @@ class PruneTest(BitcoinTestFramework):
         connect_nodes(self.nodes[2], 0)
         connect_nodes(self.nodes[0], 3)
         connect_nodes(self.nodes[0], 4)
-        sync_blocks(self.nodes[0:5])
+        sync_blocks(self.nodes[:5])
 
     def create_big_chain(self):
         # Start by creating some coinbases we can spend later
         self.nodes[1].generate(200)
-        sync_blocks(self.nodes[0:2])
+        sync_blocks(self.nodes[:2])
         self.nodes[0].generate(150)
         # Then mine enough full blocks to create more than 550MiB of data
-        for i in range(645):
+        for _ in range(645):
             mine_large_block(self.nodes[0], self.utxo_cache_0)
 
-        sync_blocks(self.nodes[0:5])
+        sync_blocks(self.nodes[:5])
 
     def test_height_min(self):
-        if not os.path.isfile(self.prunedir+"blk00000.dat"):
+        if not os.path.isfile(f"{self.prunedir}blk00000.dat"):
             raise AssertionError("blk00000.dat is missing, pruning too early")
         print("Success")
         print("Though we're already using more than 550MiB, current usage:", calc_usage(self.prunedir))
         print("Mining 25 more blocks should cause the first block file to be pruned")
         # Pruning doesn't run until we're allocating another chunk, 20 full blocks past the height cutoff will ensure this
-        for i in range(25):
+        for _ in range(25):
             mine_large_block(self.nodes[0], self.utxo_cache_0)
 
         waitstart = time.time()
-        while os.path.isfile(self.prunedir+"blk00000.dat"):
+        while os.path.isfile(f"{self.prunedir}blk00000.dat"):
             time.sleep(0.1)
             if time.time() - waitstart > 30:
                 raise AssertionError("blk00000.dat not pruned when it should be")
@@ -111,20 +121,20 @@ class PruneTest(BitcoinTestFramework):
             self.stop_node(0)
             self.nodes[0]=start_node(0, self.options.tmpdir, ["-debug","-maxreceivebuffer=20000","-blockmaxsize=999000", "-checkblocks=5"], timewait=900)
             # Mine 24 blocks in node 1
-            for i in range(24):
+            for _ in range(24):
                 if j == 0:
                     mine_large_block(self.nodes[1], self.utxo_cache_1)
                 else:
                     self.nodes[1].generate(1) #tx's already in mempool from previous disconnects
 
             # Reorg back with 25 block chain from node 0
-            for i in range(25):
+            for _ in range(25):
                 mine_large_block(self.nodes[0], self.utxo_cache_0)
 
             # Create connections in the order so both nodes can see the reorg at the same time
             connect_nodes(self.nodes[1], 0)
             connect_nodes(self.nodes[2], 0)
-            sync_blocks(self.nodes[0:3])
+            sync_blocks(self.nodes[:3])
 
         print("Usage can be over target because of high stale rate:", calc_usage(self.prunedir))
 
@@ -165,17 +175,17 @@ class PruneTest(BitcoinTestFramework):
         print("Reconnect nodes")
         connect_nodes(self.nodes[0], 1)
         connect_nodes(self.nodes[2], 1)
-        sync_blocks(self.nodes[0:3], timeout=120)
+        sync_blocks(self.nodes[:3], timeout=120)
 
         print("Verify height on node 2:",self.nodes[2].getblockcount())
         print("Usage possibly still high bc of stale blocks in block files:", calc_usage(self.prunedir))
 
         print("Mine 220 more blocks so we have requisite history (some blocks will be big and cause pruning of previous chain)")
-        for i in range(22):
+        for _ in range(22):
             # This can be slow, so do this in multiple RPC calls to avoid
             # RPC timeouts.
             self.nodes[0].generate(10) #node 0 has many large tx's in its mempool from the disconnects
-        sync_blocks(self.nodes[0:3], timeout=300)
+        sync_blocks(self.nodes[:3], timeout=300)
 
         usage = calc_usage(self.prunedir)
         print("Usage should be below target:", usage)

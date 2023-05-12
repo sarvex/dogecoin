@@ -27,8 +27,15 @@ class BumpFeeTest(BitcoinTestFramework):
         self.setup_clean_chain = True
 
     def setup_network(self, split=False):
-        extra_args = [["-debug", "-prematurewitness", "-walletprematurewitness", "-walletrbf={}".format(i)]
-                      for i in range(self.num_nodes)]
+        extra_args = [
+            [
+                "-debug",
+                "-prematurewitness",
+                "-walletprematurewitness",
+                f"-walletrbf={i}",
+            ]
+            for i in range(self.num_nodes)
+        ]
         self.nodes = start_nodes(self.num_nodes, self.options.tmpdir, extra_args)
 
         # Encrypt wallet for test_locked_wallet_fails test
@@ -49,7 +56,7 @@ class BumpFeeTest(BitcoinTestFramework):
         print("Mining blocks...")
         peer_node.generate(70)
         self.sync_all()
-        for i in range(25):
+        for _ in range(25):
             peer_node.sendtoaddress(rbf_node_address, 1.0000)
         self.sync_all()
         peer_node.generate(1)
@@ -277,16 +284,14 @@ def create_fund_sign_send(node, outputs):
     rawtx = node.createrawtransaction([], outputs)
     fundtx = node.fundrawtransaction(rawtx)
     signedtx = node.signrawtransaction(fundtx["hex"])
-    txid = node.sendrawtransaction(signedtx["hex"])
-    return txid
+    return node.sendrawtransaction(signedtx["hex"])
 
 
 def spend_one_input(node, input_amount, outputs):
     input = dict(sequence=BIP125_SEQUENCE_NUMBER, **next(u for u in node.listunspent() if u["amount"] == input_amount))
     rawtx = node.createrawtransaction([input], outputs)
     signedtx = node.signrawtransaction(rawtx)
-    txid = node.sendrawtransaction(signedtx["hex"])
-    return txid
+    return node.sendrawtransaction(signedtx["hex"])
 
 
 def get_change_address(node):

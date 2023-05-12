@@ -21,6 +21,7 @@ For a description of arguments recognized by test scripts, see
 
 """
 
+
 import os
 import time
 import shutil
@@ -32,13 +33,8 @@ import re
 sys.path.append("qa/pull-tester/")
 from tests_config import *
 
-BOLD = ("","")
-if os.name == 'posix':
-    # primitive formatting on supported
-    # terminal via ANSI escape sequences:
-    BOLD = ('\033[0m', '\033[1m')
-
-RPC_TESTS_DIR = SRCDIR + '/qa/rpc-tests/'
+BOLD = ('\033[0m', '\033[1m') if os.name == 'posix' else ("", "")
+RPC_TESTS_DIR = f'{SRCDIR}/qa/rpc-tests/'
 
 #If imported values are not defined then set to zero (or disabled)
 if 'ENABLE_WALLET' not in vars():
@@ -62,7 +58,7 @@ print_help = False
 run_parallel = 4
 
 for arg in sys.argv[1:]:
-    if arg == "--help" or arg == "-h" or arg == "-?":
+    if arg in ["--help", "-h", "-?"]:
         print_help = True
         break
     if arg == '--coverage':
@@ -76,7 +72,7 @@ for arg in sys.argv[1:]:
 
 #Set env vars
 if "BITCOIND" not in os.environ:
-    os.environ["BITCOIND"] = BUILDDIR + '/src/bitcoind' + EXEEXT
+    os.environ["BITCOIND"] = f'{BUILDDIR}/src/bitcoind{EXEEXT}'
 
 if EXEEXT == ".exe" and "-win" not in opts:
     # https://github.com/bitcoin/bitcoin/commit/d52802551752140cf41f0d9a225a43e84404d3e9
@@ -84,7 +80,7 @@ if EXEEXT == ".exe" and "-win" not in opts:
     print("Win tests currently disabled by default.  Use -win option to enable")
     sys.exit(0)
 
-if not (ENABLE_WALLET == 1 and ENABLE_UTILS == 1 and ENABLE_BITCOIND == 1):
+if ENABLE_WALLET != 1 or ENABLE_UTILS != 1 or ENABLE_BITCOIND != 1:
     print("No rpc tests to run. Wallet, utils, and bitcoind must all be enabled")
     sys.exit(0)
 
@@ -215,14 +211,14 @@ def runtests():
     if ENABLE_COVERAGE:
         coverage = RPCCoverage()
         print("Initializing coverage directory at %s\n" % coverage.dir)
-    flags = ["--srcdir=%s/src" % BUILDDIR] + passon_args
-    flags.append("--cachedir=%s/qa/cache" % BUILDDIR)
+    flags = [f"--srcdir={BUILDDIR}/src"] + passon_args
+    flags.append(f"--cachedir={BUILDDIR}/qa/cache")
     if coverage:
         flags.append(coverage.flag)
 
     if len(test_list) > 1 and run_parallel > 1:
         # Populate cache
-        subprocess.check_output([RPC_TESTS_DIR + 'create_cache.py'] + flags)
+        subprocess.check_output([f'{RPC_TESTS_DIR}create_cache.py'] + flags)
 
     #Run Tests
     max_len_name = len(max(test_list, key=len))
@@ -276,7 +272,7 @@ class RPCTestHandler:
             # Add tests
             self.num_running += 1
             t = self.test_list.pop(0)
-            port_seed = ["--portseed={}".format(len(self.test_list) + self.portseed_offset)]
+            port_seed = [f"--portseed={len(self.test_list) + self.portseed_offset}"]
             log_stdout = tempfile.SpooledTemporaryFile(max_size=2**16)
             log_stderr = tempfile.SpooledTemporaryFile(max_size=2**16)
             self.jobs.append((t,
@@ -322,16 +318,14 @@ class RPCCoverage(object):
     """
     def __init__(self):
         self.dir = tempfile.mkdtemp(prefix="coverage")
-        self.flag = '--coveragedir=%s' % self.dir
+        self.flag = f'--coveragedir={self.dir}'
 
     def report_rpc_coverage(self):
         """
         Print out RPC commands that were unexercised by tests.
 
         """
-        uncovered = self._get_uncovered_rpc_commands()
-
-        if uncovered:
+        if uncovered := self._get_uncovered_rpc_commands():
             print("Uncovered RPC commands:")
             print("".join(("  - %s\n" % i) for i in sorted(uncovered)))
         else:

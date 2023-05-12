@@ -18,9 +18,7 @@ class MerkleBlockTest(BitcoinTestFramework):
         self.num_nodes = 4
 
     def setup_network(self):
-        self.nodes = []
-        # Nodes 0/1 are "wallet" nodes
-        self.nodes.append(start_node(0, self.options.tmpdir, ["-debug"]))
+        self.nodes = [start_node(0, self.options.tmpdir, ["-debug"])]
         self.nodes.append(start_node(1, self.options.tmpdir, ["-debug"]))
         # Nodes 2/3 are used for testing
         self.nodes.append(start_node(2, self.options.tmpdir, ["-debug"]))
@@ -53,11 +51,8 @@ class MerkleBlockTest(BitcoinTestFramework):
         blockhash = self.nodes[0].getblockhash(chain_height + 1)
         self.sync_all()
 
-        txlist = []
         blocktxn = self.nodes[0].getblock(blockhash, True)["tx"]
-        txlist.append(blocktxn[1])
-        txlist.append(blocktxn[2])
-
+        txlist = [blocktxn[1], blocktxn[2]]
         assert_equal(self.nodes[2].verifytxoutproof(self.nodes[2].gettxoutproof([txid1])), [txid1])
         assert_equal(self.nodes[2].verifytxoutproof(self.nodes[2].gettxoutproof([txid1, txid2])), txlist)
         assert_equal(self.nodes[2].verifytxoutproof(self.nodes[2].gettxoutproof([txid1, txid2], blockhash)), txlist)

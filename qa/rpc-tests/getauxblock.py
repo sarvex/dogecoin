@@ -12,7 +12,7 @@ from test_framework import scrypt_auxpow as auxpow
 
 class GetAuxBlockTest (BitcoinTestFramework):
 
-  def run_test (self):
+  def run_test(self):
     # Generate a block so that we are not "downloading blocks".
     self.nodes[0].generate (1)
 
@@ -115,7 +115,7 @@ class GetAuxBlockTest (BitcoinTestFramework):
     blk = self.nodes[1].getblock (auxblock['hash'])
     tx = self.nodes[1].getrawtransaction (blk['tx'][0], 1)
     coinbase = tx['vin'][0]['coinbase']
-    assert_equal ("01%02x01" % auxblock['height'], coinbase[0 : 6]) # DOGE: We mine less blocks in these tests
+    assert_equal("01%02x01" % auxblock['height'], coinbase[:6])
 
 if __name__ == '__main__':
   GetAuxBlockTest ().main ()

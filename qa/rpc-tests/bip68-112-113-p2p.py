@@ -70,8 +70,8 @@ for b31 in range(2):
             b18times = []
             for b18 in range(2):
                 rlt = base_relative_locktime
-                if (b31):
-                    rlt = rlt | seq_disable_flag
+                if b31:
+                    rlt |= seq_disable_flag
                 if (b25):
                     rlt = rlt | seq_random_high_bit
                 if (b22):
@@ -88,8 +88,7 @@ def all_rlt_txs(txarray):
     for b31 in range(2):
         for b25 in range(2):
             for b22 in range(2):
-                for b18 in range(2):
-                    txs.append(txarray[b31][b25][b22][b18])
+                txs.extend(txarray[b31][b25][b22][b18] for b18 in range(2))
     return txs
 
 class BIP68_112_113Test(ComparisonTestFramework):
@@ -131,7 +130,7 @@ class BIP68_112_113Test(ComparisonTestFramework):
         return tx
 
     def generate_blocks(self, number, version, test_blocks = []):
-        for i in range(number):
+        for _ in range(number):
             block = self.create_test_block([], version)
             test_blocks.append([block, True])
             self.last_block_time += 600

@@ -40,8 +40,7 @@ class BlockchainTest(BitcoinTestFramework):
         self.num_nodes = 2
 
     def setup_network(self, split=False):
-        self.nodes = []
-        self.nodes.append(start_node(0, self.options.tmpdir, ["-prune=1"]))
+        self.nodes = [start_node(0, self.options.tmpdir, ["-prune=1"])]
         self.nodes.append(start_node(1, self.options.tmpdir, ["-prune=2200"]))
         connect_nodes_bi(self.nodes, 0, 1)
         self.is_network_split = False

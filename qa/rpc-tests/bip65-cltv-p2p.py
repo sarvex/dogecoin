@@ -67,13 +67,13 @@ class BIP65Test(ComparisonTestFramework):
 
         self.coinbase_blocks = self.nodes[0].generate(2)
         height = 3  # height of the next block to build
-        self.tip = int("0x" + self.nodes[0].getbestblockhash(), 0)
+        self.tip = int(f"0x{self.nodes[0].getbestblockhash()}", 0)
         self.nodeaddress = self.nodes[0].getnewaddress()
         self.last_block_time = int(time.time())
 
         ''' 398 more version 3 blocks '''
         test_blocks = []
-        for i in range(398):
+        for _ in range(398):
             block = create_block(self.tip, create_coinbase(height), self.last_block_time + 1)
             block.nVersion = 3
             block.rehash()
@@ -86,7 +86,7 @@ class BIP65Test(ComparisonTestFramework):
 
         ''' Mine 749 version 4 blocks '''
         test_blocks = []
-        for i in range(749):
+        for _ in range(749):
             block = create_block(self.tip, create_coinbase(height), self.last_block_time + 1)
             block.nVersion = 4
             block.rehash()
@@ -120,7 +120,7 @@ class BIP65Test(ComparisonTestFramework):
 
         ''' Mine 199 new version blocks on last valid tip '''
         test_blocks = []
-        for i in range(199):
+        for _ in range(199):
             block = create_block(self.tip, create_coinbase(height), self.last_block_time + 1)
             block.nVersion = 4
             block.rehash()

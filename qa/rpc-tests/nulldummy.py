@@ -17,7 +17,7 @@ def trueDummy(tx):
     scriptSig = CScript(tx.vin[0].scriptSig)
     newscript = []
     for i in scriptSig:
-        if (len(newscript) == 0):
+        if not newscript:
             assert(len(i) == 0)
             newscript.append(b'\x51')
         else:
@@ -56,12 +56,12 @@ class NULLDUMMYTest(BitcoinTestFramework):
 
         NetworkThread().start() # Start up network handling in another thread
         self.coinbase_blocks = self.nodes[0].generate(2) # Block 2
-        coinbase_txid = []
-        for i in self.coinbase_blocks:
-            coinbase_txid.append(self.nodes[0].getblock(i)['tx'][0])
+        coinbase_txid = [
+            self.nodes[0].getblock(i)['tx'][0] for i in self.coinbase_blocks
+        ]
         self.nodes[0].generate(427) # Block 429
         self.lastblockhash = self.nodes[0].getbestblockhash()
-        self.tip = int("0x" + self.lastblockhash, 0)
+        self.tip = int(f"0x{self.lastblockhash}", 0)
         self.lastblockheight = 429
         self.lastblocktime = int(time.time()) + 429
 

@@ -185,7 +185,7 @@ class ListTransactionsTest(BitcoinTestFramework):
         assert_array_result(self.nodes[1].listtransactions(), {"txid": txid_4}, {"bip125-replaceable":"unknown"})
 
         # Check gettransaction as well:
-        for n in self.nodes[0:2]:
+        for n in self.nodes[:2]:
             assert_equal(n.gettransaction(txid_1)["bip125-replaceable"], "no")
             assert_equal(n.gettransaction(txid_2)["bip125-replaceable"], "no")
             assert_equal(n.gettransaction(txid_3)["bip125-replaceable"], "yes")

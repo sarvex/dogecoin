@@ -34,7 +34,7 @@ class CLazyNode(NodeConnCB):
 
     def bad_message(self, message):
         self.unexpected_msg = True
-        print("should not have received message: %s" % message.command)
+        print(f"should not have received message: {message.command}")
 
     def on_open(self, conn):
         self.connected = True
@@ -72,7 +72,7 @@ class CNodeNoVersionBan(CLazyNode):
     # NOTE: implementation-specific check here. Remove if bitcoind ban behavior changes
     def on_open(self, conn):
         super().on_open(conn)
-        for i in range(banscore):
+        for _ in range(banscore):
             self.send_message(msg_verack())
 
     def on_reject(self, conn, message): pass
@@ -104,8 +104,9 @@ class P2PLeakTest(BitcoinTestFramework):
         super().__init__()
         self.num_nodes = 1
     def setup_network(self):
-        extra_args = [['-debug', '-banscore='+str(banscore)]
-                      for i in range(self.num_nodes)]
+        extra_args = [
+            ['-debug', f'-banscore={str(banscore)}'] for _ in range(self.num_nodes)
+        ]
         self.nodes = start_nodes(self.num_nodes, self.options.tmpdir, extra_args)
 
     def run_test(self):
@@ -113,8 +114,15 @@ class P2PLeakTest(BitcoinTestFramework):
         no_version_idlenode = CNodeNoVersionIdle()
         no_verack_idlenode = CNodeNoVerackIdle()
 
-        connections = []
-        connections.append(NodeConn('127.0.0.1', p2p_port(0), self.nodes[0], no_version_bannode, send_version=False))
+        connections = [
+            NodeConn(
+                '127.0.0.1',
+                p2p_port(0),
+                self.nodes[0],
+                no_version_bannode,
+                send_version=False,
+            )
+        ]
         connections.append(NodeConn('127.0.0.1', p2p_port(0), self.nodes[0], no_version_idlenode, send_version=False))
         connections.append(NodeConn('127.0.0.1', p2p_port(0), self.nodes[0], no_verack_idlenode))
         no_version_bannode.add_connection(connections[0])

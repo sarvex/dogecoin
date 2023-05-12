@@ -15,10 +15,7 @@ def get_sub_array_from_array(object_array, to_match):
         to_match should be a unique idetifier of a sub array
     '''
     for item in object_array:
-        all_match = True
-        for key,value in to_match.items():
-            if item[key] != value:
-                all_match = False
+        all_match = all(item[key] == value for key, value in to_match.items())
         if not all_match:
             continue
         return item

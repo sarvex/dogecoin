@@ -11,7 +11,7 @@ def get_unspent(listunspent, amount):
     for utx in listunspent:
         if utx['amount'] == amount:
             return utx
-    raise AssertionError('Could not find unspent with amount={}'.format(amount))
+    raise AssertionError(f'Could not find unspent with amount={amount}')
 
 
 class RawTransactionsTest(BitcoinTestFramework):

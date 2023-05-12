@@ -53,13 +53,12 @@ def retrieve_pr_info(repo,pull):
     Return None if no title can be found, or an error happens.
     '''
     try:
-        req = Request("https://api.github.com/repos/"+repo+"/pulls/"+pull)
+        req = Request(f"https://api.github.com/repos/{repo}/pulls/{pull}")
         result = urlopen(req)
         reader = codecs.getreader('utf-8')
-        obj = json.load(reader(result))
-        return obj
+        return json.load(reader(result))
     except Exception as e:
-        print('Warning: unable to retrieve pull information from github: %s' % e)
+        print(f'Warning: unable to retrieve pull information from github: {e}')
         return None
 
 def ask_prompt(text):

@@ -32,7 +32,7 @@ class InvalidTxRequestTest(ComparisonTestFramework):
 
     def get_tests(self):
         if self.tip is None:
-            self.tip = int("0x" + self.nodes[0].getbestblockhash(), 0)
+            self.tip = int(f"0x{self.nodes[0].getbestblockhash()}", 0)
         self.block_time = int(time.time())+1
 
         '''
@@ -52,7 +52,7 @@ class InvalidTxRequestTest(ComparisonTestFramework):
         Now we need that block to mature so we can spend the coinbase.
         '''
         test = TestInstance(sync_every_block=False)
-        for i in range(100):
+        for _ in range(100):
             block = create_block(self.tip, create_coinbase(height), self.block_time)
             block.solve()
             self.tip = block.sha256

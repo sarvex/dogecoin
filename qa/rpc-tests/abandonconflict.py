@@ -15,8 +15,13 @@ class AbandonConflictTest(BitcoinTestFramework):
         self.setup_clean_chain = False
 
     def setup_network(self):
-        self.nodes = []
-        self.nodes.append(start_node(0, self.options.tmpdir, ["-debug","-logtimemicros","-minrelaytxfee=1"]))
+        self.nodes = [
+            start_node(
+                0,
+                self.options.tmpdir,
+                ["-debug", "-logtimemicros", "-minrelaytxfee=1"],
+            )
+        ]
         self.nodes.append(start_node(1, self.options.tmpdir, ["-debug","-logtimemicros"]))
         connect_nodes(self.nodes[0], 1)
 
@@ -36,20 +41,16 @@ class AbandonConflictTest(BitcoinTestFramework):
         balance = newbalance
 
         url = urllib.parse.urlparse(self.nodes[1].url)
-        self.nodes[0].disconnectnode(url.hostname+":"+str(p2p_port(1)))
+        self.nodes[0].disconnectnode(f"{url.hostname}:{str(p2p_port(1))}")
 
         # Identify the 10btc outputs
         nA = next(i for i, vout in enumerate(self.nodes[0].getrawtransaction(txA, 1)["vout"]) if vout["value"] == Decimal("10"))
         nB = next(i for i, vout in enumerate(self.nodes[0].getrawtransaction(txB, 1)["vout"]) if vout["value"] == Decimal("10"))
         nC = next(i for i, vout in enumerate(self.nodes[0].getrawtransaction(txC, 1)["vout"]) if vout["value"] == Decimal("10"))
 
-        inputs =[]
-        # spend 10btc outputs from txA and txB
-        inputs.append({"txid":txA, "vout":nA})
-        inputs.append({"txid":txB, "vout":nB})
-        outputs = {}
+        inputs = [{"txid": txA, "vout": nA}, {"txid": txB, "vout": nB}]
+        outputs = {self.nodes[0].getnewaddress(): Decimal("14")}
 
-        outputs[self.nodes[0].getnewaddress()] = Decimal("14")
         outputs[self.nodes[1].getnewaddress()] = Decimal("5")
         signed = self.nodes[0].signrawtransaction(self.nodes[0].createrawtransaction(inputs, outputs))
         txAB1 = self.nodes[0].sendrawtransaction(signed["hex"])
@@ -59,8 +60,7 @@ class AbandonConflictTest(BitcoinTestFramework):
 
         #Create a child tx spending AB1 and C
         inputs = []
-        inputs.append({"txid":txAB1, "vout":nAB})
-        inputs.append({"txid":txC, "vout":nC})
+        inputs.extend(({"txid":txAB1, "vout":nAB}, {"txid":txC, "vout":nC}))
         outputs = {}
         outputs[self.nodes[0].getnewaddress()] = Decimal("23")
         signed2 = self.nodes[0].signrawtransaction(self.nodes[0].createrawtransaction(inputs, outputs))
@@ -89,7 +89,7 @@ class AbandonConflictTest(BitcoinTestFramework):
         unconfbalance = self.nodes[0].getunconfirmedbalance() + self.nodes[0].getbalance()
         assert_equal(unconfbalance, newbalance)
         # Also shouldn't show up in listunspent
-        assert(not txABC2 in [utxo["txid"] for utxo in self.nodes[0].listunspent(0)])
+        assert txABC2 not in [utxo["txid"] for utxo in self.nodes[0].listunspent(0)]
         balance = newbalance
 
         # Abandon original transaction and verify inputs are available again
@@ -154,7 +154,7 @@ class AbandonConflictTest(BitcoinTestFramework):
         #assert_equal(newbalance, balance - Decimal("10"))
         print("If balance has not declined after invalidateblock then out of mempool wallet tx which is no longer")
         print("conflicted has not resumed causing its inputs to be seen as spent.  See Issue #7315")
-        print(str(balance) + " -> " + str(newbalance) + " ?")
+        print(f"{str(balance)} -> {str(newbalance)} ?")
 
 if __name__ == '__main__':
     AbandonConflictTest().main()

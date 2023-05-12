@@ -81,16 +81,10 @@ def check_ELF_RELRO(executable):
     GNU_RELRO program header must exist
     Dynamic section must have BIND_NOW flag
     '''
-    have_gnu_relro = False
-    for (typ, flags) in get_ELF_program_headers(executable):
-        # Note: not checking flags == 'R': here as linkers set the permission differently
-        # This does not affect security: the permission flags of the GNU_RELRO program header are ignored, the PT_LOAD header determines the effective permissions.
-        # However, the dynamic linker need to write to this area so these are RW.
-        # Glibc itself takes care of mprotecting this area R after relocations are finished.
-        # See also http://permalink.gmane.org/gmane.comp.gnu.binutils/71347
-        if typ == b'GNU_RELRO':
-            have_gnu_relro = True
-
+    have_gnu_relro = any(
+        typ == b'GNU_RELRO'
+        for typ, flags in get_ELF_program_headers(executable)
+    )
     have_bindnow = False
     p = subprocess.Popen([READELF_CMD, '-d', '-W', executable], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     (stdout, stderr) = p.communicate()
@@ -110,11 +104,7 @@ def check_ELF_Canary(executable):
     (stdout, stderr) = p.communicate()
     if p.returncode:
         raise IOError('Error opening file')
-    ok = False
-    for line in stdout.split(b'\n'):
-        if b'__stack_chk_fail' in line:
-            ok = True
-    return ok
+    return any(b'__stack_chk_fail' in line for line in stdout.split(b'\n'))
 
 def get_PE_dll_characteristics(executable):
     '''
@@ -192,7 +182,7 @@ if __name__ == '__main__':
         try:
             etype = identify_executable(filename)
             if etype is None:
-                print('%s: unknown format' % filename)
+                print(f'{filename}: unknown format')
                 retval = 1
                 continue
 
@@ -205,12 +195,12 @@ if __name__ == '__main__':
                     else:
                         failed.append(name)
             if failed:
-                print('%s: failed %s' % (filename, ' '.join(failed)))
+                print(f"{filename}: failed {' '.join(failed)}")
                 retval = 1
             if warning:
-                print('%s: warning %s' % (filename, ' '.join(warning)))
+                print(f"{filename}: warning {' '.join(warning)}")
         except IOError:
-            print('%s: cannot open' % filename)
+            print(f'{filename}: cannot open')
             retval = 1
     exit(retval)
 
